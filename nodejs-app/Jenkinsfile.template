@@ -21,12 +21,24 @@ pipeline {
         }
       }
       stage('Build and Push Image') {
+         when {
+           beforeAgent true
+           branch 'master'
+         }
+         steps {
+           echo "TODO - build and push image"
+         }
+      }
+      stage('Deploy') {
       when {
         beforeAgent true
         branch 'master'
       }
+      input {
+        message "Should we continue?"
+      }
       steps {
-        echo "TODO - build and push image"
+        echo "Continuing with deployment"
       }
     }
    }
