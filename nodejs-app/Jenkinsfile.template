@@ -1,4 +1,4 @@
-library 'cd-accel'
+library 'cd-accel@completed'
 
 pipeline {
   agent none
