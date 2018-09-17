@@ -18,8 +18,9 @@ pipeline {
             sh 'java -version'
          }
       }
-      stage('Test') {
- agent {
+
+ stage('Test') {
+      agent {
         kubernetes {
           label 'nodejs-app-inline'
           yaml """
@@ -29,7 +30,7 @@ metadata:
 spec:
   containers:
   - name: nodejs
-    image: node:10.10.1-alpine
+    image: node:10.9.0-alpine
     command:
     - cat
     tty: true
@@ -41,17 +42,32 @@ spec:
           """
         }
       }
-      steps {
-        checkout scm
-        container('nodejs') {
-          sh '''
-            npm install express
-            npm install pug --save
-            node ./hello.js &
-          '''
+      stages {
+        stage('Node Setup') {
+          steps {
+            checkout scm
+            container('nodejs') {
+              sh '''
+                npm install express
+                npm install pug --save
+                node ./hello.js &
+              '''
+            }
+          }
         }
-        container('testcafe') {
-          sh '/opt/testcafe/docker/testcafe-docker.sh "chromium --no-sandbox,firefox" tests/*.js -r xunit:res.xml'
+        stage('Chrome') {
+          steps {
+            container('testcafe') {
+              sh '/opt/testcafe/docker/testcafe-docker.sh "chromium --no-sandbox" tests/*.js -r xunit:res.xml'
+            }
+          }
+        }
+        stage('Firefox') {
+          steps {
+            container('testcafe') {
+              sh '/opt/testcafe/docker/testcafe-docker.sh firefox tests/*.js -r xunit:res.xml'
+            }
+          }
         }
       }
       post {
@@ -61,8 +77,8 @@ spec:
         always {
           junit 'res.xml'
         }
-      }
-
+      }    
+    }
       stage('Build and Push Image') {
          agent { label 'default-jnlp' }
          when {
