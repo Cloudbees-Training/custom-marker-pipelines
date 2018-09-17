@@ -11,43 +11,37 @@ pipeline {
     }
    }
    stages {
-       stage('Define Kubernetes Pod') {
-           agent {
-                kubernetes {
-                    label 'nodejs-app-inline'
-            yaml """
-                kind: Pod
-                metadata:
-                name: nodejs-app
-                spec:
-                containers:
-                - name: nodejs
-                    image: node:10.10.0-alpine
-                    command:
-                    - cat
-                    tty: true
-                - name: testcafe
-                    image: 946759952272.dkr.ecr.us-east-1.amazonaws.com/kypseli/testcafe:alpha-1
-                    command:
-                    - cat
-                    tty: true
-            """
-                }
-            }
-            steps {
-             echo 'Defined Pod - nodejs-app-inline' 
-            }  
-        }
       stage('Say Hello') {
-         agent { label 'nodejs-app-inline' }
+         agent { label 'default-jnlp' }
          steps {
             echo 'Hello World!'   
             sh 'java -version'
          }
       }
       stage('Test') {
-         agent { label 'nodejs-app-inline' }
-         steps {
+ agent {
+        kubernetes {
+          label 'nodejs-app-inline'
+          yaml """
+kind: Pod
+metadata:
+  name: nodejs-app
+spec:
+  containers:
+  - name: nodejs
+    image: node:10.10.1-alpine
+    command:
+    - cat
+    tty: true
+  - name: testcafe
+    image: 946759952272.dkr.ecr.us-east-1.amazonaws.com/kypseli/testcafe:alpha-1
+    command:
+    - cat
+    tty: true
+          """
+        }
+      }
+      steps {
           checkout scm
           container('nodejs') {
             echo 'Hello World!'
@@ -61,7 +55,7 @@ pipeline {
         }
       }
       stage('Build and Push Image') {
-         agent { label 'nodejs-app-inline' }
+         agent { label 'default-jnlp' }
          when {
            beforeAgent true
            branch 'master'
