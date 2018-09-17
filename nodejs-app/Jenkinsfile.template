@@ -29,7 +29,7 @@ metadata:
 spec:
   containers:
   - name: nodejs
-    image: node:10.10.0-alpine
+    image: node:10.10.1-alpine
     command:
     - cat
     tty: true
@@ -42,18 +42,27 @@ spec:
         }
       }
       steps {
-          checkout scm
-          container('nodejs') {
-            echo 'Hello World!'
-            sh 'node --version'
-          }
+        checkout scm
+        container('nodejs') {
+          sh '''
+            npm install express
+            npm install pug --save
+            node ./hello.js &
+          '''
         }
-        post {
-           success {
-             stash name: 'app', includes: '*.js, public/**, views/*, Dockerfile'
-           }
+        container('testcafe') {
+          sh '/opt/testcafe/docker/testcafe-docker.sh "chromium --no-sandbox,firefox" tests/*.js -r xunit:res.xml'
         }
       }
+      post {
+        success {
+          stash name: 'app', includes: '*.js, public/**, views/*, Dockerfile'
+        }
+        always {
+          junit 'res.xml'
+        }
+      }
+
       stage('Build and Push Image') {
          agent { label 'default-jnlp' }
          when {
