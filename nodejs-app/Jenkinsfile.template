@@ -11,14 +11,6 @@ pipeline {
     }
    }
    stages {
-      stage('Say Hello') {
-         agent { label 'default-jnlp' }
-         steps {
-            echo 'Hello World!'   
-            sh 'java -version'
-         }
-      }
-
  stage('Test') {
       agent {
         kubernetes {
