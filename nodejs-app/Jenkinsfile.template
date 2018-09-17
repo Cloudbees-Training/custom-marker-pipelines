@@ -13,8 +13,8 @@ pipeline {
    stages {
        stage('Define Kubernetes Pod') {
            agent {
-            kubernetes {
-            label 'nodejs-app-inline'
+                kubernetes {
+                    label 'nodejs-app-inline'
             yaml """
                 kind: Pod
                 metadata:
@@ -32,13 +32,12 @@ pipeline {
                     - cat
                     tty: true
             """
+                }
             }
-        }
-        steps {
+            steps {
              echo 'Defined Pod - nodejs-app-inline' 
-        }  
-      }
-
+            }  
+        }
       stage('Say Hello') {
          agent { label 'nodejs-app-inline' }
          steps {
