@@ -3,6 +3,10 @@ pipeline {
    options { 
     buildDiscarder(logRotator(numToKeepStr: '2'))
   }
+  post {
+    aborted {
+      echo "Why didn't you push my button?"
+    }
    stages {
       stage('Say Hello') {
          agent { label 'default-jnlp' }
@@ -39,7 +43,7 @@ pipeline {
       }
       input {
         message "Should we deploy?"
-        submitter "kayla"
+        submitter "kayla,rizzorc"
         submitterParameter "APPROVER"
       }
       steps {
