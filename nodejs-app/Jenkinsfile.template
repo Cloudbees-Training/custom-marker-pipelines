@@ -8,39 +8,14 @@ pipeline {
     preserveStashes(buildCount: 2)
   }
   stages {
-    stage('Test') {
+    stage('Test') {      
       agent {
         kubernetes {
           label 'nodejs-app-inline'
-          yaml """
-            kind: Pod
-            metadata:
-              name: nodejs-app
-            spec:
-              containers:
-              - name: nodejs
-                image: node:10.9.0-alpine
-                command:
-                - cat
-                tty: true
-              - name: testcafe-chrome
-                image: 946759952272.dkr.ecr.us-east-1.amazonaws.com/kypseli/testcafe:alpha-1
-                command:
-                - cat
-                tty: true
-              - name: testcafe-firefox
-                image: 946759952272.dkr.ecr.us-east-1.amazonaws.com/kypseli/testcafe:alpha-1
-                command:
-                - cat
-                tty: true
-                ports:
-                - name: firefox1
-                  containerPort: 1339
-                - name: firefox2
-                  containerPort: 1340
-          """
+          yaml testPodYaml
         }
       }
+      
       stages {
         stage('App Setup') {
           steps {
@@ -82,17 +57,19 @@ pipeline {
         }
       }    
     }
+    
     stage('Build and Push Image') {
-      agent any
       when {
         beforeAgent true
         branch 'master'
       }
       steps {
-        echo "TODO - build and push image"
-        unstash 'app'
+        dockerBuildPush(env.IMAGE_NAME, env.IMAGE_TAG) {
+          unstash 'app'
+        }
       }
     }
+    
     stage('Deploy') {
       when {
         beforeAgent true
@@ -106,7 +83,7 @@ pipeline {
         submitterParameter "APPROVER"
       }
       steps {
-        echo "Continuing with deployment - approved by ${APPROVER}"
+        kubeDeploy(env.IMAGE_NAME, env.IMAGE_TAG)
       }
     }
   }
